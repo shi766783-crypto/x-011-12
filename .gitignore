@@ -1,0 +1,63 @@
+# 依赖
+node_modules/
+.pnpm-store/
+
+# 构建产物
+dist/
+dist-ssr/
+build/
+out/
+
+# 本地缓存
+.cache/
+*.tsbuildinfo
+.vite/
+.temp/
+.tmp/
+
+# 日志
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# 编辑器与 IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+
+# 测试覆盖率
+coverage/
+.nyc_output/
+
+# 环境变量（含密钥，禁止提交）
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.test
+
+# 操作系统
+Thumbs.db
+Desktop.ini
+
+# 其他
+*.local
+
+# PINRU annotation baseline
+node_modules/
+.DS_Store
+.env
+.env.*
+!.env.example
+!.env.sample
