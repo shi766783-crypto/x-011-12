@@ -9,6 +9,8 @@ import { daysBetween, today } from '@/utils/date'
  * - 应完成学时 = min(已过天数 × 每日时长, 总学时)
  * - 实际学时 = 该计划关联日志的时长之和
  * - 进度百分比 = min(实际 / 总 × 100, 100)，手动完成视为 100%
+ * - 落后学时 = max(应完成 - 实际, 0)
+ * - 明显落后 = 进行中且落后学时 ≥ 每日计划学时（即落后超过一天量）
  */
 export function computePlanProgress(plan: StudyPlan, logs: StudyLog[]): PlanProgress {
   const todayKey = today()
@@ -36,6 +38,9 @@ export function computePlanProgress(plan: StudyPlan, logs: StudyLog[]): PlanProg
     status = '进行中'
   }
 
+  const behindHours = Math.max(shouldHours - actualHours, 0)
+  const isBehind = status === '进行中' && behindHours >= plan.dailyHours
+
   return {
     elapsedDays,
     remainingDays,
@@ -44,6 +49,8 @@ export function computePlanProgress(plan: StudyPlan, logs: StudyLog[]): PlanProg
     actualHours: Math.round(actualHours * 10) / 10,
     percent: Math.round(percent),
     status,
+    behindHours: Math.round(behindHours * 10) / 10,
+    isBehind,
   }
 }
 

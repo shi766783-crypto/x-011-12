@@ -2,7 +2,7 @@
 import { computed, reactive, ref } from 'vue'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage } from 'element-plus'
-import type { Domain, StudyPlan, StudyResource } from '@/types'
+import type { Domain, PlanProgress, StudyPlan, StudyResource } from '@/types'
 import { DOMAINS } from '@/constants'
 import { computePlanProgress } from '@/utils/progress'
 import { today } from '@/utils/date'
@@ -59,6 +59,14 @@ const statusTagType: Record<string, 'info' | 'success' | 'danger' | 'primary'> =
   进行中: 'primary',
   已完成: 'success',
   已逾期: 'danger',
+}
+
+/** 进度条状态：已完成绿、已逾期红、明显落后黄，其余默认 */
+function progressBarStatus(progress: PlanProgress): 'success' | 'exception' | 'warning' | undefined {
+  if (progress.status === '已完成') return 'success'
+  if (progress.status === '已逾期') return 'exception'
+  if (progress.isBehind) return 'warning'
+  return undefined
 }
 
 function openCreate(): void {
@@ -142,7 +150,7 @@ function removePlan(plan: StudyPlan): void {
 
         <el-progress
           :percentage="progress.percent"
-          :status="progress.status === '已逾期' ? 'exception' : progress.status === '已完成' ? 'success' : undefined"
+          :status="progressBarStatus(progress)"
           :stroke-width="12"
         />
 
@@ -152,6 +160,15 @@ function removePlan(plan: StudyPlan): void {
           <span>应完成 {{ progress.shouldHours }}h</span>
           <span>实际 {{ progress.actualHours }}h / {{ plan.totalHours }}h</span>
         </div>
+
+        <el-alert
+          v-if="progress.isBehind"
+          class="pace-alert"
+          type="warning"
+          show-icon
+          :closable="false"
+          :title="`进度落后，还差 ${progress.behindHours}h 跟上节奏`"
+        />
 
         <div class="plan-resources" v-if="plan.resources.length">
           <el-link
@@ -275,6 +292,10 @@ function removePlan(plan: StudyPlan): void {
   gap: 12px;
   font-size: 12px;
   color: #909399;
+  margin-top: 10px;
+}
+
+.pace-alert {
   margin-top: 10px;
 }
 
