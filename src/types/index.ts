@@ -106,6 +106,10 @@ export interface PlanProgress {
   actualHours: number
   percent: number
   status: '未开始' | '进行中' | '已完成' | '已逾期'
+  /** 实际学时是否明显落后于按日期应完成的学时 */
+  behindSchedule: boolean
+  /** 距离按节奏应完成的学时还差多少小时（落后时 > 0，否则为 0） */
+  behindHours: number
 }
 
 /** 聚合统计 */

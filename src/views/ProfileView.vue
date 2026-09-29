@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import StatCard from '@/components/StatCard.vue'
-import { computePlanProgress } from '@/utils/progress'
+import { computePlanProgress, planProgressBarStatus } from '@/utils/progress'
 import { useAchievementsStore } from '@/stores/achievements'
 import { useLogsStore } from '@/stores/logs'
 import { usePlansStore } from '@/stores/plans'
@@ -17,10 +17,14 @@ const achievementsStore = useAchievementsStore()
 const stats = computed(() => statsStore.stats)
 
 const recentPlans = computed(() =>
-  plansStore.plans.slice(0, 5).map((plan) => ({
-    plan,
-    progress: computePlanProgress(plan, logsStore.logs),
-  })),
+  plansStore.plans.slice(0, 5).map((plan) => {
+    const progress = computePlanProgress(plan, logsStore.logs)
+    return {
+      plan,
+      progress,
+      barStatus: planProgressBarStatus(progress),
+    }
+  }),
 )
 
 const recentLogs = computed(() => logsStore.logs.slice(0, 5))
@@ -48,12 +52,15 @@ const unlockedBadges = computed(() => achievementsStore.achievements.filter((a) 
         <template #header><span>我的学习计划</span></template>
         <el-empty v-if="recentPlans.length === 0" description="暂无学习计划" />
         <div v-else class="plan-mini-list">
-          <div v-for="{ plan, progress } in recentPlans" :key="plan.id" class="plan-mini">
+          <div v-for="{ plan, progress, barStatus } in recentPlans" :key="plan.id" class="plan-mini">
             <div class="plan-mini-head">
               <span>{{ plan.name }}</span>
               <el-tag size="small" effect="plain">{{ plan.domain }}</el-tag>
             </div>
-            <el-progress :percentage="progress.percent" :stroke-width="8" />
+            <el-progress :percentage="progress.percent" :status="barStatus" :stroke-width="8" />
+            <div v-if="progress.behindSchedule" class="plan-mini-behind">
+              进度落后，还差 {{ progress.behindHours }}h
+            </div>
           </div>
           <el-button text type="primary" @click="router.push('/plans')">查看全部计划 →</el-button>
         </div>
@@ -126,6 +133,12 @@ const unlockedBadges = computed(() => achievementsStore.achievements.filter((a) 
   margin-bottom: 6px;
   font-size: 14px;
   color: #303133;
+}
+
+.plan-mini-behind {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #e6a23c;
 }
 
 .stat-table {

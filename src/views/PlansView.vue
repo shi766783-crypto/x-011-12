@@ -4,7 +4,7 @@ import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage } from 'element-plus'
 import type { Domain, StudyPlan, StudyResource } from '@/types'
 import { DOMAINS } from '@/constants'
-import { computePlanProgress } from '@/utils/progress'
+import { computePlanProgress, planProgressBarStatus } from '@/utils/progress'
 import { today } from '@/utils/date'
 import { uid } from '@/utils/id'
 import { useLogsStore } from '@/stores/logs'
@@ -48,10 +48,14 @@ const rules: FormRules = {
 }
 
 const planViews = computed(() =>
-  plansStore.plans.map((plan) => ({
-    plan,
-    progress: computePlanProgress(plan, logsStore.logs),
-  })),
+  plansStore.plans.map((plan) => {
+    const progress = computePlanProgress(plan, logsStore.logs)
+    return {
+      plan,
+      progress,
+      barStatus: planProgressBarStatus(progress),
+    }
+  }),
 )
 
 const statusTagType: Record<string, 'info' | 'success' | 'danger' | 'primary'> = {
@@ -129,7 +133,7 @@ function removePlan(plan: StudyPlan): void {
     <el-empty v-if="planViews.length === 0" description="还没有学习计划，点击右上角新建" />
 
     <div class="plan-list">
-      <el-card v-for="{ plan, progress } in planViews" :key="plan.id" class="plan-card" shadow="hover">
+      <el-card v-for="{ plan, progress, barStatus } in planViews" :key="plan.id" class="plan-card" shadow="hover">
         <div class="plan-head">
           <div class="plan-title">
             <span class="plan-name">{{ plan.name }}</span>
@@ -140,13 +144,28 @@ function removePlan(plan: StudyPlan): void {
 
         <p class="plan-goal">{{ plan.goal || '暂无目标描述' }}</p>
 
+        <el-alert
+          v-if="progress.behindSchedule"
+          class="behind-alert"
+          type="warning"
+          :closable="false"
+          show-icon
+        >
+          <template #title>
+            <span class="behind-text">
+              进度落后：按日期应完成 {{ progress.shouldHours }}h，实际仅 {{ progress.actualHours }}h，还差
+              <b>{{ progress.behindHours }}h</b>
+            </span>
+          </template>
+        </el-alert>
+
         <el-progress
           :percentage="progress.percent"
-          :status="progress.status === '已逾期' ? 'exception' : progress.status === '已完成' ? 'success' : undefined"
+          :status="barStatus"
           :stroke-width="12"
         />
 
-        <div class="plan-meta">
+        <div class="plan-meta" :class="{ 'is-behind': progress.behindSchedule }">
           <span>已过 {{ progress.elapsedDays }} 天</span>
           <span>剩余 {{ progress.remainingDays }} 天</span>
           <span>应完成 {{ progress.shouldHours }}h</span>
@@ -269,6 +288,21 @@ function removePlan(plan: StudyPlan): void {
   margin: 8px 0 12px;
 }
 
+.behind-alert {
+  margin-bottom: 10px;
+  padding: 6px 10px;
+}
+
+.behind-text {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.behind-text b {
+  color: #e6a23c;
+  font-size: 13px;
+}
+
 .plan-meta {
   display: flex;
   flex-wrap: wrap;
@@ -276,6 +310,10 @@ function removePlan(plan: StudyPlan): void {
   font-size: 12px;
   color: #909399;
   margin-top: 10px;
+}
+
+.plan-meta.is-behind {
+  color: #e6a23c;
 }
 
 .plan-resources {
